@@ -187,7 +187,7 @@ SWAGGER_SETTINGS = {
     "JSON_EDITOR": True,
 }
 
-#AUTH_USER_MODEL = "authentications.UserProfile"
+#AUTH_USER_MODEL = "authentications.UserAccount"
 
 CORS_ORIGIN_ALLOW_ALL = True
 CORS_ALLOW_CREDENTIALS = True

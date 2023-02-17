@@ -1,29 +1,23 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser, BaseUserManager
+import uuid
 
 # Create your models here.
 
-class UserManager(BaseUserManager):
-    def create_user(self, email, password=None):
+class CustomUserManager(BaseUserManager):
+    def create_user(self, email, password=None, **extra_fields):
         if not email:
-            raise ValueError("Users must have an email address")
-        user = self.model(
-            email=self.normalize_email(email),
-        )
+            raise ValueError('The Email field must be set')
+        email = self.normalize_email(email)
+        user = self.model(email=email, **extra_fields)
         user.set_password(password)
         user.save(using=self._db)
         return user
 
-    def create_superuser(self, email, password):
-        user = self.create_user(
-            email=self.normalize_email(email),
-            password=password,
-        )
-        user.is_admin = True
-        user.is_staff = True
-        user.is_superuser = True
-        user.save(using=self._db)
-        return user
+    def create_superuser(self, email, password=None, **extra_fields):
+        extra_fields.setdefault('is_staff', True)
+        extra_fields.setdefault('is_superuser', True)
+        return self.create_user(email, password, **extra_fields)
 
 class GeographicLocation(models.Model):
     href = models.CharField(max_length=200)
@@ -54,7 +48,7 @@ class GeographicSubAddress(models.Model):
 
 
 class Address(models.Model):
-    href = models.URLField()
+    href = models.CharField(max_length=200)
     city = models.CharField(max_length=100)
     country = models.CharField(max_length=100)
     locality = models.CharField(max_length=100)
@@ -87,11 +81,10 @@ class ValidFor(models.Model):
     endDateTime = models.DateTimeField()
     startDateTime = models.DateTimeField()
 
-    def __str__(self):
-        return self.startDateTime
 
 
 class Attachment(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     href = models.URLField(max_length=200)
     attachmentType = models.CharField(max_length=200)
     content = models.CharField(max_length=200)
@@ -130,6 +123,7 @@ class Entitlement(models.Model):
         return self.action
 
 class UserAssets(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     assetType = models.CharField(max_length=100)
     entityType = models.CharField(max_length=100)
     role = models.CharField(max_length=100)
@@ -139,6 +133,7 @@ class UserAssets(models.Model):
         return self.assetType
 
 class UserAccount(AbstractUser):
+    customusermanager = CustomUserManager()
     birthdate = models.DateField(blank=True, null=True)
     email_verified = models.BooleanField(blank=True, null=True)
     family_name = models.CharField(max_length=100, blank=True, null=True)
@@ -151,7 +146,7 @@ class UserAccount(AbstractUser):
     phone_number = models.CharField(max_length=20, blank=True, null=True)
     phone_number_verified = models.BooleanField(blank=True, null=True)
     picture = models.URLField(blank=True, null=True)
-    preferred_username = models.CharField(max_length=100, unique=True, blank=True, null=True)
+    preferred_username = models.CharField(max_length=100, unique=True)
     profile = models.URLField(blank=True, null=True)
     sub = models.UUIDField(unique=True, blank=True, null=True)
     website = models.URLField(blank=True, null=True)
@@ -163,9 +158,9 @@ class UserAccount(AbstractUser):
     first_name = None
     last_name = None
 
-    def __str__(self):
-        return self.username
+    username = None
+    USERNAME_FIELD = 'preferred_username'
+    REQUIRED_FIELDS = ['email']
 
-    # username replaced with preferred_username
-    def get_username(self):
+    def __str__(self):
         return self.preferred_username

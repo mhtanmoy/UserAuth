@@ -32,6 +32,26 @@ class CustomRenderer(JSONRenderer):
 
         response = renderer_context["response"]
 
+        pagination = {
+            "count": None,
+            "next": None,
+            "previous": None
+        }
+        if data:
+            if "results" in data:
+                try:
+                    if data.get("results") is not None:
+                        pagination["count"] = data.pop("count")
+                        pagination["next"] = data.pop("next")
+                        pagination["previous"] = data.pop("previous")
+                        data = data.pop("results")
+                    else:
+                        error_code = 404
+                        error_message = 'No data found'
+                        data = data.pop("results")
+                except:
+                    pass
+
         if response.status_code in [400, 401, 403, 404, 405, 409, 500]:
             error_code = response.status_code
             error_message = None

@@ -10,9 +10,10 @@ class UserViewSet(viewsets.ModelViewSet):
     queryset = UserAccount.objects.all()
     serializer_class = UserAccountSerializer
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
-    filterset_fields = ['id', 'name', 'email']
+    #filterset_fields = ['id', 'name', 'email']
     search_fields = ['id', 'name', 'email']
     ordering_fields = ['id', 'name', 'email']
+    permission_classes = [permissions.IsAuthenticated]
 
     def get_serializer_class(self):
         if self.action == 'create':
